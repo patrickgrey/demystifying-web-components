@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Elements</title>
+    <style>
+        fun-button>button {
+            padding: 1rem 2rem;
+            font-size: 4rem;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Custom Elements</h1>
+    <h2>Greeting component</h2>
+    <say-hi id="sayHello" data-name="Sue">
+        <p>Hi, World!</p>
+    </say-hi>
+
+    <h2>Countdown timer</h2>
+    <countdown-timer id="countdownTimer" data-time="100">
+        <p>Countdown: <span>100</span></p>
+    </countdown-timer>
+
+    <h2>Base class</h2>
+    <p>
+    <pre>
+            <code>
+    class HTMLElementCheckChildren extends HTMLElement {
+    
+        constructor() {
+            super();
+        }
+        
+        $ = this.querySelector;
+        // Check that the child nodes are available
+        // before interacting as connectedCallback can
+        // fire when the opening tag is found
+        ready(fn) {
+            if (this.children.length) {
+                return fn.apply(this);
+            }
+            new MutationObserver(fn.bind(this)).observe(this, {childList:true});
+        }
+    }
+            </code>
+        </pre>
+    </p>
+
+    <h2>fun boolean attribute</h2>
+
+    <fun-button fun>
+        <button>😀</button>
+    </fun-button>
+
+
+    <script>
+        // Make a base class
+        class HTMLElementCheckChildren extends HTMLElement {
+
+            constructor() {
+                super();
+            }
+
+            $ = this.querySelector;
+            // Check that the child nodes are available
+            // before interacting as connectedCallback can
+            // fire when the opening tag is found
+            ready(fn) {
+                if (this.children.length) {
+                    return fn.apply(this);
+                }
+                new MutationObserver(fn.bind(this)).observe(this, {
+                    childList:
+                        true
+                });
+            }
+        }
+
+        // Make a countdown timer
+        class FunButton extends HTMLElementCheckChildren {
+            static observedAttributes = ["fun"];
+
+            get fun() {
+                return this.hasAttribute('fun');
+            }
+            set fun(val) {
+                if (val) {
+                    this.setAttribute('fun',
+                        '');
+                } else {
+                    this.removeAttribute('fun');
+                }
+            }
+
+            connectedCallback() {
+                this.ready(this.#init);
+            }
+
+            #init() {
+                const button = this.$("button");
+                button.addEventListener("click", (event) => {
+                    this.fun ? this.fun = false : this.fun = true;
+                })
+            }
+
+            attributeChangedCallback(name, oldValue, newValue) {
+                if (name === 'fun') {
+                    const button = this.$("button");
+                    if (this.fun) {
+                        console.log("happy");
+                        button.textContent = "😀";
+                    } else {
+                        console.log("sad");
+                        button.textContent = "☹️";
+                    }
+                }
+            }
+        }
+        customElements.define("fun-button", FunButton);
+
+        // Make a countdown timer
+        class CountdownTimer extends HTMLElementCheckChildren {
+            static observedAttributes = ["data-time"];
+            // constructor() {
+            //     super();
+            // }
+
+            connectedCallback() {
+                this.ready(this.#init);
+            }
+
+            #init() {
+                // Start setInterval
+                this.timeInterval = setInterval(() => {
+                    if (this.dataset.time > 0) {
+                        this.dataset.time = this.dataset.time - 1;
+                    } else {
+                        clearInterval(this.timeInterval);
+                    }
+                    console.log("this.dataset.time: ", this.dataset.time);
+
+                }, 500);
+            }
+
+            attributeChangedCallback(name, oldValue, newValue) {
+                if (name === 'data-time' && oldValue && oldValue !== newValue) {
+                    const label = this.$("span");
+                    label.textContent = this.dataset.time;
+                }
+            }
+
+            disconnectedCallback() {
+                clearInterval(this.timeInterval);
+            }
+
+        }
+        customElements.define("countdown-timer", CountdownTimer);
+
+        const countdownTimer = document.querySelector(`#countdownTimer`);
+        setTimeout(() => {
+            countdownTimer.remove();
+        }, 500)
+
+
+        // Make a greeting component
+        class SayHi extends HTMLElementCheckChildren {
+
+            static observedAttributes = ["data-name"];
+
+            // constructor() {
+            //     super();
+            // }
+
+            attributeChangedCallback(name, oldValue, newValue) {
+                if (name === 'data-name' && oldValue && oldValue !== newValue) {
+                    const label = this.querySelector("p");
+                    label.textContent = `Hi, ${newValue}!`;
+                }
+            }
+
+            connectedCallback() {
+                this.ready(this.#init);
+            }
+
+            #init() {
+                const label = this.querySelector("p");
+                label.textContent = `Hi, ${this.dataset.name}!`;
+            }
+        }
+        customElements.define("say-hi", SayHi);
+
+        const sayHello = document.querySelector(`#sayHello`);
+        sayHello.dataset.name = "Bob2"
+
+    </script>
+</body>
+
+</html>
