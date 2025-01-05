@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Templates</title>
+    <style>
+
+    </style>
+</head>
+
+<body>
+    <h1>HTML Templates</h1>
+    <h2>DLs</h2>
+
+    <template id="kids-list">
+        <div>
+            <dt></dt>
+            <dd></dd>
+        </div>
+    </template>
+
+    <kids-list></kids-list>
+
+    <script>
+
+        const kidsArray = [{ "name": "Ruth", "superpower": "Ginger" }, { "name": "Finn", "superpower": "Mountain biking" }, { "name": "Ben", "superpower": "Gaming" }]
+
+        // Make a list of definitions
+        class KidList extends HTMLElement {
+            connectedCallback() {
+                const kidsList = document.querySelector(`#kids-list`);
+                const dl = document.createElement("dl")
+                this.append(dl)
+                kidsArray.forEach(kid => {
+                    console.log("kid: ", kid);
+
+                    const definition = kidsList?.content.cloneNode(true);
+                    const dt = definition.querySelector("dt")
+                    const dd = definition.querySelector("dd")
+                    dt.textContent = kid.name
+                    dd.textContent = kid.superpower
+                    dl.append(definition)
+                })
+            }
+        }
+        customElements.define("kids-list", KidList);
+
+
+
+    </script>
+</body>
+
+</html>
